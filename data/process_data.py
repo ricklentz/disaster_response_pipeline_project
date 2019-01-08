@@ -1,16 +1,36 @@
 import sys
-
+import pandas as pd
+import sqlite3
 
 def load_data(messages_filepath, categories_filepath):
-    pass
+    
+    cats = pd.read_csv(categories_filepath)
+    messages = pd.read_csv(messages_filepath)
+
+     # add the categories
+    for category in [x.split('-')[0] for x in cats.categories[0].split(';')]:
+        # add the category
+        messages[category] = 0
+
+    # populate the category values
+    for index, row in messages.iterrows():
+        message_id = row['id']
+        category = cats.loc[cats['id'] == message_id].categories.iloc[0]
+        rec_cats = [t.replace('-1','') for t in category.split(';') if '-1' in t]
+        for category in [t.replace('-1','') for t in category.split(';') if '-1' in t]:
+            messages.at[index,category] = 1
+    return messages
 
 
 def clean_data(df):
-    pass
+    #print(df.head(3))
+    df.drop_duplicates(subset='message', keep='first', inplace=True)
+    return df
 
 
 def save_data(df, database_filename):
-    pass  
+    conn = sqlite3.connect(database_filename)
+    df.to_sql(name = 'messages',con = conn)
 
 
 def main():
@@ -21,7 +41,7 @@ def main():
         print('Loading data...\n    MESSAGES: {}\n    CATEGORIES: {}'
               .format(messages_filepath, categories_filepath))
         df = load_data(messages_filepath, categories_filepath)
-
+        
         print('Cleaning data...')
         df = clean_data(df)
         
@@ -34,9 +54,8 @@ def main():
         print('Please provide the filepaths of the messages and categories '\
               'datasets as the first and second argument respectively, as '\
               'well as the filepath of the database to save the cleaned data '\
-              'to as the third argument. \n\nExample: python process_data.py '\
-              'disaster_messages.csv disaster_categories.csv '\
-              'DisasterResponse.db')
+              ' to as the third argument. \n\n Example: \n'\
+              ' python process_data.py disaster_messages.csv disaster_categories.csv DisasterResponse.db')
 
 
 if __name__ == '__main__':
