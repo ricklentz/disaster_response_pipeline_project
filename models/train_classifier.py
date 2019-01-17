@@ -9,6 +9,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.multioutput import MultiOutputClassifier
 from sklearn.metrics import classification_report, accuracy_score
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.externals import joblib
@@ -46,34 +47,17 @@ def tokenize(text):
 
 def build_model():
     pipeline = Pipeline([
-        ('features', FeatureUnion([
-
-            ('text_pipeline', Pipeline([
-                ('vect', CountVectorizer(tokenizer=tokenize)),
-                ('tfidf', TfidfTransformer())
-            ]))
-        ])),
-
-        ('clf', RandomForestClassifier())
+        ('vect', CountVectorizer(tokenizer=tokenize)),
+        ('tfidf', TfidfTransformer()),
+        ('clf', MultiOutputClassifier(RandomForestClassifier()))
     ])
-
+    
     parameters = {
-        #'features__text_pipeline__vect__ngram_range': ((1, 1), (1, 2)),
-        #'features__text_pipeline__vect__max_df': (0.5, 1.0),#.75
-        #'features__text_pipeline__vect__max_features': (None, 10000),#5000
-        #'features__text_pipeline__tfidf__use_idf': (True, False),
-        #'clf__n_estimators': [100, 200],#50
-        'clf__min_samples_split': [2,4]#3
-        #'features__transformer_weights': (
-        #    {'text_pipeline': 1},
-        #    {'text_pipeline': 0.5},
-        #    {'text_pipeline': 0.8},
-        #)
+        'vect__ngram_range': ((1, 1), (1, 2)),
+        'clf__estimator__min_samples_split': [2, 3, 4],
     }
 
-    cv = GridSearchCV(pipeline, param_grid=parameters)
-
-    return cv
+    return GridSearchCV(pipeline, param_grid=parameters, verbose=2, n_jobs=8)
 
 
 
