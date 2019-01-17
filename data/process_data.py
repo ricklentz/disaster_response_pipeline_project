@@ -3,13 +3,22 @@ import pandas as pd
 import sqlite3
 
 def load_data(messages_filepath, categories_filepath):
+     """Combines the messages and categorical label csv files.
+
+    arguments:
+        messages_filepath -- the path to the messsages csv
+        categories_filepath -- the path to the labels csv
+
+    returns:
+        combinded dataframe
+    """
     
     cats = pd.read_csv(categories_filepath)
     messages = pd.read_csv(messages_filepath)
 
      # add the categories
     for category in [x.split('-')[0] for x in cats.categories[0].split(';')]:
-        # add the category
+        # add the category column
         messages[category] = 0
 
     # populate the category values
@@ -23,12 +32,18 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
-    #print(df.head(3))
+    """Removes duplicates of the message content, keeping the first instance of each unique message."""
     df.drop_duplicates(subset='message', keep='first', inplace=True)
     return df
 
 
 def save_data(df, database_filename):
+    """Writes the data frame to a sqlite database.
+
+    Keyword arguments:
+    df -- the pandas dataframe to be loaded into the sqlite table
+    database_filename -- the path to the sqlite database file
+    """
     conn = sqlite3.connect(database_filename)
     df.to_sql(name = 'messages',con = conn)
 

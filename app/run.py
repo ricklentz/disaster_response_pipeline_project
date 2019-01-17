@@ -1,9 +1,10 @@
 import json
 import plotly
 import pandas as pd
-
+import numpy as np
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
 
 from flask import Flask
 from flask import render_template, request, jsonify
@@ -36,7 +37,7 @@ vect = joblib.load('../vect.pkl')
 tfidf = joblib.load('../tfidf.pkl')
 
 # load model
-model = joblib.load(r'/Users/rwl012/Documents/GitHub/disaster_response_pipeline_project/models/classifier.pkl')
+model = joblib.load(r'../models/classifier.pkl')
 
 
 # index webpage displays cool visuals and receives user input text for model
@@ -48,16 +49,12 @@ def index():
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
 
-    # Show distribution of different category
-    category = list(df.columns[4:])
-    category_counts = []
-    for column_name in category:
-        category_counts.append(np.sum(df[column_name]))
+    category_counts = df.drop(['id','message','original','genre','index'], axis=1).sum()
+    category_names = list(category_counts.index)
 
-    # extract data exclude related
-    categories = df.iloc[:,4:]
-    categories_mean = categories.mean().sort_values(ascending=False)[1:11]
-    categories_names = list(categories_mean.index)
+    word_series = pd.Series(' '.join(df['message']).lower().split())
+    top_words = word_series[~word_series.isin(stopwords.words("english"))].value_counts()[:5]
+    top_words_names = list(top_words.index)
 
     # create visuals
     graphs = [
@@ -82,7 +79,7 @@ def index():
         {
             'data': [
                 Bar(
-                    x=category,
+                    x=category_names,
                     y=category_counts
                 )
             ],
@@ -97,21 +94,21 @@ def index():
                 }
             }
         },
-        {
+         {
             'data': [
                 Bar(
-                    x=categories_names,
-                    y=categories_mean
+                    x=top_words_names,
+                    y=top_words
                 )
             ],
 
             'layout': {
-                'title': 'Top 10 Message Categories',
+                'title': 'Most Frequent Words',
                 'yaxis': {
-                    'title': "Percentage"
+                    'title': "Count"
                 },
                 'xaxis': {
-                    'title': "Categories"
+                    'title': "Words"
                 }
             }
         }
@@ -133,8 +130,9 @@ def go():
     
     # use model to predict classification for query
     classification_labels = model.predict([query])[0]
+    print(classification_labels)
     classification_results = dict(zip(df.columns[4:], classification_labels))
-
+    print(classification_results)
     # This will render the go.html Please see that file. 
     return render_template(
         'go.html',

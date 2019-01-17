@@ -1,5 +1,8 @@
 # Disaster Response Pipeline Project
 
+This project demonstrates several practices when increasing the value of unstructured text data.  The data is combined and cleaned during the first step of the pipeline.  Machine learning is applied to the processed data to build and test a model.  The model is used by the Flask web application to display simple distributions of the historical data and demonstrate the classification of new messages into each of the 36 categories.  
+
+
 ### Instructions:
 1. Run the following commands in the project's root directory to set up your database and model.
 

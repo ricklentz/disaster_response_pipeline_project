@@ -9,15 +9,23 @@ from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.metrics import classification_report, accuracy_score
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.externals import joblib
 from sklearn.model_selection import GridSearchCV
 from sklearn.base import BaseEstimator, TransformerMixin
 import numpy as np
-
+ 
 
 def load_data(database_filepath):
-    print(database_filepath)
+    """Loads data from a sqlite database file.
+
+    params:
+        database_filepath -- relative file path
+
+    returns:
+        tuple of results and labels
+    """
     conn = sqlite3.connect(database_filepath)
     
     results = pd.read_sql_query("SELECT * FROM 'messages';", conn)
@@ -70,9 +78,11 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    y_pred = model.predict(X_test)
-    # display results
-    #display_results(model, Y_test, y_pred)
+    y_preds = model.predict(X_test)
+    print(classification_report(y_preds, Y_test.values, target_names=category_names))
+    print("**** Accuracy scores for each category *****\n")
+    for i in range(36):
+        print("Accuracy score for " + Y_test.columns[i], accuracy_score(Y_test.values[:,i],y_preds[:,i]))
 
 
 def save_model(model, model_filepath):
